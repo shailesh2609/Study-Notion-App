@@ -15,10 +15,10 @@ const mailSender = async(email, title, body) => {
 
         // send mail
         let info = await transporter.sendMail({
-            from: `StudyNotion App - by Shailesh`,
-            to: `${email}`,
-            subject: `${title}`,
-            html:`${body}`
+            from: "StudyNotion App - by Shailesh",
+            to: email,
+            subject: title,
+            html: body
         })
         
         console.log(info);
@@ -26,6 +26,7 @@ const mailSender = async(email, title, body) => {
     }
     catch(error){
         console.log(error.message);
+        throw error;
     }
 }
 
