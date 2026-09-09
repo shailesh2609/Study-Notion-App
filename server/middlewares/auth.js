@@ -10,7 +10,7 @@ exports.auth = (req,res,next) => {
                     req.header("Authorization")?.replace("Bearer ","");
 
         // check whether token is missing 
-        if(!token || token === undefined){
+        if(!token){
             return res.status(401).json({
                 success: false,
                 message: "Token is Missing"
@@ -21,7 +21,7 @@ exports.auth = (req,res,next) => {
         try{
             const payload = jwt.verify(token, process.env.JWT_SECRET);
 
-            user.req = payload;
+            req.user = payload;                       // JWT payload is JSON-based, so the MongoDB ObjectId doesn't remain an actual Mongoose ObjectId after being encoded/decoded.It will generally come back as a string.
         }
         catch(error){
             return res.status(401).json({
@@ -42,10 +42,10 @@ exports.auth = (req,res,next) => {
 
 
 // isStudent
-exports.isStudent = async(req,res,next) => {
+exports.isStudent = (req,res,next) => {
     try{
         if(req.user.accountType != "Student"){
-            return res.status(401).json({
+            return res.status(403).json({
                 success:false,
                 message:'This is a protected route for Student'
             });
@@ -62,12 +62,12 @@ exports.isStudent = async(req,res,next) => {
 
 
 // isInstructor
-exports.isInstructor = async(req,res,next) => {
+exports.isInstructor = (req,res,next) => {
     try{
         if(req.user.accountType != "Instructor"){
-            return res.status(401).json({
-                success:false,
-                message:'This is a protected route for Instructor'
+            return res.status(403).json({
+                success: false,
+                message: "This is a protected route for Instructor",
             });
         }
         next();
@@ -85,7 +85,7 @@ exports.isInstructor = async(req,res,next) => {
 exports.isAdmin = (req,res,next) => {
     try{
         if(req.user.accountType != "Admin"){
-            return res.status(401).json({
+            return res.status(403).json({
                 success:false,
                 message:'This is a protected route for Admin'
             });

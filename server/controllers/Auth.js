@@ -215,6 +215,7 @@ exports.login = async (req, res) => {
         // Generate JWT token
         const payload = {
             email : user.email,
+            id : user._id,
             accountType: user.accountType
         }
         const token = jwt.sign(

@@ -20,10 +20,6 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    confirmPassword:{
-        type: String,
-        required: true
-    },
     contactNumber:{
         type: Number,
         required: true
@@ -49,7 +45,7 @@ const userSchema = new mongoose.Schema({
         required: true,
     },
     token : {
-        type:string
+        type:String
     },
     resetPasswordExpires:{
         type:Date
@@ -59,7 +55,17 @@ const userSchema = new mongoose.Schema({
             type: mongoose.Schema.Types.ObjectId,
             ref : "CourseProgress"
         }
-    ]
+    ],
+    accountStatus: {
+        type: String,
+        enum: ["active", "pending_deletion"],
+        default: "active",
+    },
+    deletionScheduledAt: {
+        type: Date,
+        default: null,
+    },
+
 
 });
 
