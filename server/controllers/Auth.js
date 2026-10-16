@@ -21,7 +21,6 @@ exports.sendOTP = async (req, res) => {
                 message: "Email is required"
             });
         }
-
         // check whether User already exist or not 
         const userExists = await User.findOne({ email });
 
@@ -55,8 +54,11 @@ exports.sendOTP = async (req, res) => {
                 //     result = await OTP.findOne({otp:otp});
                 // }
 
+        
+
         // create an entry for otp in db
         await OTP.create({ email, otp });
+        
 
         // return response successfully
         return res.status(200).json({
@@ -79,10 +81,11 @@ exports.sendOTP = async (req, res) => {
 exports.signup = async (req, res) => {
     try{
         // data fetch from request ki body
+        const email = req.body.email?.trim().toLowerCase();
+
         const {
             firstName, 
-            lastName, 
-            email, 
+            lastName,  
             password, 
             confirmPassword, 
             accountType, 
@@ -149,10 +152,10 @@ exports.signup = async (req, res) => {
         // Create Entry in DB
         const user = await User.create({
             firstName, 
-            lastName, 
-            email, 
-            password:hashedPassword, 
-            accountType, 
+            lastName,
+            email,
+            password:hashedPassword,
+            accountType,
             contactNumber,
             additionalDetails:profileDetails._id,
             image:`https://api.dicebear.com/5.x/initials/svg?seed=${firstName}${lastName}`
@@ -161,6 +164,7 @@ exports.signup = async (req, res) => {
         // return response 
         return res.status(201).json({
             success: true,
+            data:user,
             message: "User is Registered Successfully"
         });
     }

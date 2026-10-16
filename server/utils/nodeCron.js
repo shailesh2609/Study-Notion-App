@@ -2,10 +2,10 @@ const cron = require("node-cron");
 const User = require("../models/User");
 const Profile = require("../models/Profile");
 
-// Run the account deletion job at the beginning of every hour.
-// Cron format: "0 * * * *"
-// This means: At minute 0 of every hour (e.g., 1:00, 2:00, 3:00, etc.)
-cron.schedule("0 * * * *", async () => {
+// Run the account deletion job at the beginning of every sec.
+// Cron format: "* * * * * *"  represents   check every sec
+// This means: At every sec(e.g.,  it runs at 10:00, 10:01, 10:02, and so on.)
+cron.schedule("* * * * * *", async () => {
     try {
         // Find all users who:
         // 1. Have requested account deletion
@@ -13,7 +13,7 @@ cron.schedule("0 * * * *", async () => {
         const users = await User.find({
             accountStatus: "pending_deletion",
             deletionScheduledAt: {
-                $lte: new Date() // Current date/time
+                $lte: new Date()        // $lte means "less than or equal to" : Current date/time
             }
         });
 

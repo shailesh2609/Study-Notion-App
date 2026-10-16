@@ -114,10 +114,11 @@ exports.getAverageRating = async (req, res) => {
 
         // Calculate average rating using aggregate() 
         const result = await RatingAndReview.aggregate([
-            // stage 1 : filtering all reviews based on particular Course  
+            // stage 1 : filtering all reviews based on particular Course(Sirf kisi particular Course ki ratings select karo)
             {
                 $match: {
                     course: new mongoose.Types.ObjectId(courseId),     // string ko MongoDB ke ObjectId mein convert karta hai
+                    // request se aane wala courseId string hota hai, lekin database mein course field ObjectId ho sakti hai. Isliye hum ID ko ObjectId mein convert karte hain
                 },
             },
             // stage 2 : Jo documents $match se mile hain, unko group karo
@@ -126,7 +127,7 @@ exports.getAverageRating = async (req, res) => {
                     _id: null,     // _id: null mtlb Saare matched reviews ko ek hi group mein daal do
                     averageRating: {
                         $round: [                   //  $round mtlb  Average ko 1 decimal place tak round karo
-                            { $avg: "$rating" },
+                            { $avg: "$rating" },    // $avg: "$rating" ka matlab hai database mein jo rating ki values hain, unka average nikaalo.
                             1
                         ],
                     },
@@ -136,6 +137,21 @@ exports.getAverageRating = async (req, res) => {
                 },
             },
         ]);
+
+        // Aggregation ka result array mein aata hai.
+        //      Example:
+        //      const result = [
+        //          {
+        //              _id: null,
+        //              averageRating: 4,
+        //              totalReviews: 3
+        //          }
+        //      ];
+        //          result = poora array.
+        //          result[0] = array ke andar pehla object.
+        //          result[0].averageRating = 4.
+        //          result[0].totalReviews = 3.
+
 
         // No reviews
         if (result.length === 0) {
@@ -170,7 +186,7 @@ exports.getAllRating = async (req, res) => {
     try {
         // Get all reviews
         const allReviews = await RatingAndReview.find({})
-            .sort({ rating: -1 })     // sort in descending order
+            .sort({ rating: -1 })     // sort in descending order(5 star phle )
             .populate({
                 path: "user",
                 select: "firstName lastName image",

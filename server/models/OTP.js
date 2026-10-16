@@ -1,5 +1,5 @@
 const mongoose  = require("mongoose");
-
+const otpTemplate = require("../mail/templates/emailVerificationTemplate");
 const mailSender = require("../utils/mailSender");
 
 
@@ -25,7 +25,7 @@ const otpSchema = new mongoose.Schema({
 // a function -> to send emails
 async function sendVerificationEmail(email, otp){
     try{
-        const mailResponse = await mailSender(email, "Verification Email From Study Notion", otp);
+        const mailResponse = await mailSender(email, "Verification Email From Study Notion",  otpTemplate(otp));
         console.log("Email sent Successfully : ", mailResponse);
     }
     catch(error){
@@ -35,9 +35,8 @@ async function sendVerificationEmail(email, otp){
 }
 
 // pre middleware used -> before creating entry in db
-otpSchema.pre('save', async function(next){
+otpSchema.pre('save', async function(){
     await sendVerificationEmail(this.email, this.otp);
-    next();
 })
 
 module.exports = mongoose.model("OTP", otpSchema);

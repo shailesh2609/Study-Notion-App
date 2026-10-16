@@ -16,7 +16,7 @@ exports.createCategory = async (req, res) => {
         }
 
         // Check if category already exists
-        const existingCategory = await Tag.findOne({ name });
+        const existingCategory = await Category.findOne({ name });
 
         if (existingCategory) {
             return res.status(409).json({
@@ -111,7 +111,7 @@ exports.categoryPageDetails = async (req, res) => {
 
         // Get courses from different categories
         const differentCategories = await Category.find({
-            _id: { $ne: categoryId },
+            _id: { $ne: categoryId },      // "ne" is not equal
         }).populate({
             path: "courses",
             select: "courseName price thumbnail studentsEnrolled",
@@ -121,7 +121,7 @@ exports.categoryPageDetails = async (req, res) => {
         const topSellingCourses = await Course.aggregate([
             // stage 1 : Iska kaam hai har course ke andar ek temporary field totalStudents add karna
             {
-                $addFields: {
+                $addFields: {        // "$addFields" Ye har course ke document mein ek naya field add karta hai
                     totalStudents: {
                         $size: {                                    // "$size": Array ki length/count nikalta hai.
                             $ifNull: ["$studentsEnrolled", []],     // Agar studentsEnrolled available hai → use karo.    Agar null/missing hai → empty array [] use karo. 

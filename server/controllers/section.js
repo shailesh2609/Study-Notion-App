@@ -124,18 +124,43 @@ exports.updateSection = async (req, res) => {
 // delete Section
 exports.deleteSection = async (req, res) => {
     try {
-        // fetch data
-        const { sectionId } = req.params;
+        const { courseId, sectionId } = req.body;
 
-        // Validate sectionId format
-        if (!mongoose.Types.ObjectId.isValid(sectionId)) {
+        // Validate IDs
+        if (
+            !mongoose.Types.ObjectId.isValid(courseId) ||
+            !mongoose.Types.ObjectId.isValid(sectionId)
+        ) {
             return res.status(400).json({
                 success: false,
-                message: "Invalid sectionId",
+                message: "Invalid courseId or sectionId",
             });
         }
 
-        // Delete section from Section collection
+        // Check whether the course contains this section
+        const course = await Course.findOne({
+            _id: courseId,
+            courseContent: sectionId,
+        });
+
+        if (!course) {
+            return res.status(404).json({
+                success: false,
+                message: "Course or section association not found",
+            });
+        }
+
+        // Remove section ID from courseContent
+        await Course.updateOne(
+            { _id: courseId },
+            {
+                $pull: {
+                    courseContent: sectionId,
+                },
+            }
+        );
+
+        // Delete the section document
         const section = await Section.findByIdAndDelete(sectionId);
 
         if (!section) {
@@ -145,25 +170,16 @@ exports.deleteSection = async (req, res) => {
             });
         }
 
-        // Remove deleted section ID from courseContent array
-        await Course.updateOne(
-            { courseContent: sectionId },
-            {
-                $pull: {
-                    courseContent: sectionId,
-                },
-            }
-        );
-
         return res.status(200).json({
             success: true,
-            message: "Section Deleted Successfully",
+            message: "Section deleted successfully",
         });
-    } 
-    catch (error) {
+    } catch (error) {
+        console.error("Delete section error:", error);
+
         return res.status(500).json({
             success: false,
-            message: "Unable to delete Section, please try again",
+            message: "Unable to delete section, please try again",
             error: error.message,
         });
     }

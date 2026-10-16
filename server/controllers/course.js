@@ -1,7 +1,7 @@
 const Course = require("../models/Course");
 const Category = require("../models/Category");
 const User = require("../models/User");
-const uploadImageToCloudinary = require("../utils/imageUploader");
+const {uploadImageToCloudinary} = require("../utils/imageUploader");
 const mongoose = require("mongoose");
 
 //createCourse handler function
@@ -13,7 +13,10 @@ exports.createCourse = async (req, res) => {
             courseDescription,
             whatYouWillLearn,
             price,
-            category} = req.body;
+            tag,
+            category,
+            status
+        } = req.body;
 
         //get thumbnail
         const thumbnail = req.files?.thumbnailImage;
@@ -31,6 +34,10 @@ exports.createCourse = async (req, res) => {
                 message:'All fields are required',
             });
         }
+
+        if (!status || status === undefined) {
+			status = "Draft";
+		}
 
         // Validate price -> checks that price (number hai aur negative nahi hai)
         if (isNaN(price) || Number(price) < 0) {
@@ -63,8 +70,8 @@ exports.createCourse = async (req, res) => {
             });
         }
 
-        //check given tag is valid or not
-        const categoryDetails = await Tag.findById(tag);
+        //check given category is valid or not
+        const categoryDetails = await Category.findById(category);
         if(!categoryDetails) {
             return res.status(404).json({
                 success:false,
@@ -84,13 +91,14 @@ exports.createCourse = async (req, res) => {
             price,
             category:categoryDetails._id,
             thumbnail:thumbnailImage.secure_url,
+            status: status
         })
 
         //add the new course to the user schema of Instructor
         await User.findByIdAndUpdate(
             instructorDetails._id,
             {
-                $push: {                    // push -> Push karo, duplicate ki tension nahi
+                $push: {                    // push -> Push karo, duplicate allowed
                     courses: newCourse._id,
                 }
             },
@@ -101,7 +109,7 @@ exports.createCourse = async (req, res) => {
         await Category.findByIdAndUpdate(
             categoryDetails._id,
             {
-                $addToSet: {                // addToSet -> Add karo, but duplicate nahi
+                $addToSet: {                // addToSet -> Add karo, but duplicate not allowed 
                     courses: newCourse._id,
                 },
             }

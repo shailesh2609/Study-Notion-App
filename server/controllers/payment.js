@@ -1,5 +1,5 @@
 const {instance} = require("../config/razorpay");
-const Course = require("../model/Course");
+const Course = require("../models/Course");
 const User = require("../models/User");
 const mailSender = require("../utils/mailSender");
 const {courseEnrollmentEmail} = require("../mail/templates/courseEnrollmentEmail");
@@ -87,20 +87,51 @@ exports.capturePayment = async (req, res) => {
 
 };
 
-//verify Signature of Razorpay and Server
 
+
+//verify Signature of Razorpay and Server
 exports.verifySignature = async (req, res) => {
+    // example webhook secret key 
     const webhookSecret = "12345678";
 
-    const signature = req.headers["x-razorpay-signature"];
+    // From razorpay 
+    const receivedSignature = req.headers["x-razorpay-signature"];
+    
+    if (!receivedSignature) {
+      return res.status(400).json({
+        error: "Missing signature ",
+      });
+    }
 
-    const shasum =  crypto.createHmac("sha256", webhookSecret);
-    shasum.update(JSON.stringify(req.body));
-    const digest = shasum.digest("hex");
+    const expectedSignature = crypto
+      .createHmac("sha256", webhookSecret)
+      .update(JSON.stringify(req.body))
+      .digest("hex");
 
-    if(signature === digest) {
+
+    if(receivedSignature === expectedSignature) {
         console.log("Payment is Authorised");
 
+
+        // JSON request body looks like 
+        // {
+        //   "entity": "event",
+        //   "event": "payment.captured",
+        //   "payload": {
+        //     "payment": {
+        //       "entity": {
+        //         "id": "pay_example123",
+        //         "order_id": "order_example123",
+        //         "amount": 50000,
+        //         "status": "captured",
+        //         "notes": {
+        //           "userId": "123",
+        //           "productId": "456"
+        //         }
+        //       }
+        //     }
+        //   }
+        // }
         const {courseId, userId} = req.body.payload.payment.entity.notes;
 
         try{

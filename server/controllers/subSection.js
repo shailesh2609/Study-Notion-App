@@ -174,19 +174,47 @@ exports.updateSubSection = async (req, res) => {
 // delete Sub Section
 exports.deleteSubSection = async (req, res) => {
     try {
-        // fetch data
-        const { subSectionId } = req.params;
+        // Fetch data
+        const { subSectionId, sectionId } = req.body;
 
-        // Validate subSectionId format
-        if (!mongoose.Types.ObjectId.isValid(subSectionId)) {
+        // Validate IDs
+        if (
+            !mongoose.Types.ObjectId.isValid(subSectionId) ||
+            !mongoose.Types.ObjectId.isValid(sectionId)
+        ) {
             return res.status(400).json({
                 success: false,
-                message: "Invalid subSectionId",
+                message: "Invalid subSectionId or sectionId",
             });
         }
 
-        // Delete sub section from Section collection
-        const subSection = await SubSection.findByIdAndDelete(subSectionId);
+        // Check whether subsection belongs to this section
+        const section = await Section.findOne({
+            _id: sectionId,
+            subSection: subSectionId,
+        });
+
+        if (!section) {
+            return res.status(404).json({
+                success: false,
+                message: "Section or subsection association not found",
+            });
+        }
+
+        // Remove subsection ID from section array
+        await Section.updateOne(
+            { _id: sectionId },
+            {
+                $pull: {
+                    subSection: subSectionId,
+                },
+            }
+        );
+
+        // Delete subsection document
+        const subSection = await SubSection.findByIdAndDelete(
+            subSectionId
+        );
 
         if (!subSection) {
             return res.status(404).json({
@@ -195,22 +223,14 @@ exports.deleteSubSection = async (req, res) => {
             });
         }
 
-        // Remove deleted sub section ID from section array
-        await Section.updateOne(
-            { subSection: subSectionId },
-            {
-                $pull: {
-                    subSection: subSectionId,
-                },
-            }
-        );
-
         return res.status(200).json({
             success: true,
             message: "Sub Section Deleted Successfully",
         });
-    } 
-    catch (error) {
+
+    } catch (error) {
+        console.error("Delete sub section error:", error);
+
         return res.status(500).json({
             success: false,
             message: "Unable to delete Sub Section, please try again",
